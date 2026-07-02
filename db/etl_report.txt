@@ -1,0 +1,121 @@
+ESTOQUE.csv: 390 veiculos unicos (status comercial: {'ESTOQUE': 213, 'FATURADO': 87, 'VENDA DIRETA': 103})
+ESTOQUE SHOWROOM.csv: 227 linhas, 33 chassi novos (nao vistos em ESTOQUE)
+PROGRAMACAO.csv: 301 veiculos unicos, 148 sobrescreveram ESTOQUE/SHOWROOM
+CAMINHOES ENTREGUES.csv: 1160 veiculos unicos, 94 sobrescreveram os anteriores
+Total de eventos pos-venda: 126
+TOTAL veiculos consolidados: 1642
+
+Distribuicao por estagio:
+  01_aguardando_faturamento: 201
+  02_faturado: 37
+  03_em_patio: 13
+  04_verificacao_documentacao: 0
+  05_em_preparacao: 222
+  06_qualidade: 0
+  07_liberado: 4
+  08_agendado_cliente: 3
+  09_entregue: 1162
+  10_encerrado: 0
+
+Tipo de venda: {'padrao': 1633, 'venda_direta': 3, 'semi_novo': 4, 'usado': 2}
+Flags: {'nao_pago': 510, 'avariado': 2, 'recall_tem': 50}
+
+Vendedores unicos (com merge de duplicatas): 22
+  - CARLOS
+  - CARLOS MARANHAO
+  - CRISTIANO
+  - DANIELITON
+  - DOUGLAS
+  - ENEIAS
+  - EURIPEDES
+  - FERNANDO  (aliases: ['FERANDO - PEDIU', 'FERNANDO - PEDIU', 'FERNANDO GER.'])
+  - FRANK
+  - GADMA  (aliases: ['GADIMÃ'])
+  - GUILHERME
+  - GUSTAVO
+  - JORGE
+  - JOSUE
+  - KRISLEY
+  - LAILA
+  - LUIZ CARLOS  (aliases: ['LUIS CARLOS'])
+  - LUIZ CLAUDIO
+  - MARIANA
+  - PAULO
+  - RUI
+  - WALERIA  (aliases: ['VALERIA'])
+
+Locais unicos: 19
+  - ANAPOLIS  (aliases: ['ANÁPOLIS'])
+  - ANS  (aliases: ['GABARDO - ANS'])
+  - CLIENTE
+  - CLIENTE VOLTAR
+  - DESTINO
+  - EM TRANSITO - GABARDO  (aliases: ['EM VIAJEM - GABARDO'])
+  - EXPOSICAO/EVENTO  (aliases: ['EXPOSIÇÃO', 'EXPOSIÇÃO / EVENTO'])
+  - FABRICA
+  - FACCHINI
+  - GABARDO RJ
+  - HOLMES
+  - IMPLEMENTADOR
+  - ITUMBIARA
+  - JBS - ANS
+  - JRV
+  - PATIO 1
+  - PATIO 2
+  - SEM DESTINO  (aliases: ['VER ONDE ESTA'])
+  - SHOWROOM
+
+Implementos unicos: 14
+  - BAU
+  - BAU-FACCHINI
+  - BAU-JRV
+  - CACAMBA-FACCHINI
+  - CACAMBA-JRV
+  - CARROC. FLACH
+  - CARROC. JRV
+  - FLACH
+  - NENHUM
+  - OUTRO
+  - PIPA
+  - PIPA-JRV
+  - SIDER
+  - VAI COLOCAR
+
+Movimentacao: 1020 linhas
+Agenda de entrega: 367 linhas (linhas sem chassi/data descartadas)
+Agenda de acessorios: 31 linhas
+
+--- Valores REJEITADOS (linha com dado provavelmente na coluna errada na planilha original, nao viraram referencia) ---
+Vendedor rejeitados (86 ocorrencias, 16 valores unicos):
+  - 'REMESSA': 29x
+  - 'P SHOWROOM': 11x
+  - 'OK': 10x
+  - 'NÃO': 10x
+  - 'SIM': 3x
+  - 'ABERT': 3x
+  - 'YURI': 3x
+  - 'MARKETING': 3x
+  - 'JRV': 3x
+  - 'RETIRAR BAU': 2x
+  - 'RETIRAR PÇ': 2x
+  - 'MÔNACO': 2x
+  - 'EXPOSIÇÃO': 2x
+  - 'FUTURA VENDA': 1x
+  - 'LANTERNAGEM': 1x
+  - 'TIRAR BAU': 1x
+Local rejeitados (1 ocorrencias, 1 valores unicos):
+  - 'FLACH': 1x
+Implemento rejeitados (18 ocorrencias, 13 valores unicos):
+  - 'LAVADO': 4x
+  - '31/03/26': 2x
+  - 'BRANCO GEADA': 2x
+  - '18/02/26': 1x
+  - '28/02/26': 1x
+  - '12/05/26': 1x
+  - '26/11/25': 1x
+  - '27/05/26': 1x
+  - '382641': 1x
+  - '08/04/06': 1x
+  - '24/02/26': 1x
+  - '01/09/2025': 1x
+  - '28/08/25': 1x

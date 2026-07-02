@@ -1,0 +1,105 @@
+@import "tailwindcss";
+
+/* Fonte oficial do Excalidraw (subset latino, servida localmente de
+   public/fonts) — usada no diagrama hand-drawn do /fluxograma */
+@font-face {
+  font-family: "Excalifont";
+  src: url("/fonts/Excalifont-Regular.woff2") format("woff2");
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+@theme {
+  --color-background: #f6f7f9;
+  --color-surface: #ffffff;
+  --color-border: #e2e5ea;
+  --color-ink: #12141a;
+  --color-muted: #6b7280;
+
+  --color-belcar-900: #0f2540;
+  --color-belcar-700: #1e4a80;
+  --color-belcar-600: #2563ac;
+  --color-belcar-500: #3b82c4;
+  --color-belcar-100: #e5eef8;
+
+  --color-fase1: #6b7280;
+  --color-fase1-bg: #f3f4f6;
+  --color-fase2: #b45309;
+  --color-fase2-bg: #fef3c7;
+  --color-fase3: #15803d;
+  --color-fase3-bg: #dcfce7;
+
+  --color-danger: #dc2626;
+  --color-danger-bg: #fee2e2;
+  --color-warning: #d97706;
+  --color-warning-bg: #fef3c7;
+  --color-success: #16a34a;
+  --color-success-bg: #dcfce7;
+
+  --font-sans: "Inter", system-ui, "Segoe UI", Roboto, sans-serif;
+}
+
+html {
+  color-scheme: light;
+}
+
+body {
+  margin: 0;
+  background: var(--color-background);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+#root {
+  min-height: 100svh;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+/* Números alinham em colunas e KPIs (dígitos de largura fixa) */
+table,
+[data-numeric] {
+  font-variant-numeric: tabular-nums;
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-thumb {
+  background: #cbd2db;
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #aeb7c2;
+}
+
+/* Entrada suave de páginas e dropdowns */
+@keyframes fade-slide-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-page-in {
+  animation: fade-slide-in 180ms ease-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

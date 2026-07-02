@@ -1,0 +1,12 @@
+# dependências e build
+node_modules/
+dist/
+
+# artefatos do Google Drive / Windows
+*.gsheet
+desktop.ini
+.DS_Store
+
+# logs e temporários
+*.log
+*.tmp
