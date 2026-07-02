@@ -1,0 +1,879 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Torre de Controle de Estoque e Fluxo Operacional — Belcar</title>
+<style>
+  :root{
+    --navy:#0C1B3A; --navy2:#12244A; --blue:#1E4A80; --blue-soft:#3B6FB0;
+    --purple:#5A4BC4; --purple2:#7A5BE0; --orange:#F26111; --amber:#D97706;
+    --ink:#182130; --muted:#5B6577; --faint:#8A94A6;
+    --line:#E7EAF1; --line2:#EEF1F7; --bg:#FBFBFD; --card:#FFFFFF;
+    --success:#16A34A; --danger:#DC2626; --info:#3B82C4;
+    --shadow:0 10px 30px rgba(12,27,58,.08), 0 2px 6px rgba(12,27,58,.05);
+    --shadow-sm:0 4px 14px rgba(12,27,58,.06);
+  }
+  *{ box-sizing:border-box; margin:0; padding:0; }
+  html,body{ background:#4a4f5c; }
+  body{
+    font-family:'Segoe UI','Helvetica Neue',Arial,'DejaVu Sans',sans-serif;
+    color:var(--ink); -webkit-font-smoothing:antialiased; line-height:1.5;
+    font-size:11px;
+  }
+  @page{ size:A4; margin:0; }
+  .page{
+    position:relative; width:210mm; height:297mm; background:var(--bg);
+    margin:0 auto; overflow:hidden; page-break-after:always;
+    padding:17mm 16mm 15mm;
+  }
+  .page:last-child{ page-break-after:auto; }
+
+  /* ---------- shared type ---------- */
+  .kicker{
+    display:inline-flex; align-items:center; gap:7px;
+    font-size:9.5px; font-weight:700; letter-spacing:.16em; text-transform:uppercase;
+    color:var(--blue);
+  }
+  .kicker::before{ content:""; width:20px; height:2px; background:var(--orange); border-radius:2px; }
+  .kicker.on-dark{ color:#BFD0EA; }
+  .h1{ font-size:27px; font-weight:800; line-height:1.12; letter-spacing:-.01em; color:var(--navy); }
+  .h2{ font-size:19px; font-weight:800; line-height:1.15; letter-spacing:-.01em; color:var(--navy); }
+  .h3{ font-size:13px; font-weight:750; color:var(--navy); }
+  .lead{ font-size:12.5px; color:var(--muted); line-height:1.6; }
+  p{ color:var(--muted); }
+  .em{ color:var(--ink); font-weight:650; }
+  .accent{ color:var(--orange); }
+  .mt6{margin-top:6px}.mt10{margin-top:10px}.mt14{margin-top:14px}.mt18{margin-top:18px}
+  .mt24{margin-top:24px}.mt30{margin-top:30px}.mt40{margin-top:40px}
+
+  /* ---------- running header / footer ---------- */
+  .rh{ position:absolute; top:9mm; left:16mm; right:16mm;
+    display:flex; align-items:center; justify-content:space-between;
+    font-size:8.5px; letter-spacing:.04em; color:var(--faint); }
+  .rh .brand{ font-weight:800; color:var(--navy); letter-spacing:.02em; }
+  .rh .brand span{ color:var(--orange); }
+  .rf{ position:absolute; bottom:8mm; left:16mm; right:16mm;
+    display:flex; align-items:center; justify-content:space-between;
+    font-size:8px; letter-spacing:.03em; color:var(--faint);
+    border-top:1px solid var(--line); padding-top:6px; }
+  .rf .lock{ display:inline-flex; align-items:center; gap:5px; }
+  .pageno{ font-weight:700; color:var(--muted); }
+
+  /* ---------- cards ---------- */
+  .card{ background:var(--card); border:1px solid var(--line); border-radius:14px;
+    box-shadow:var(--shadow-sm); padding:16px 16px; }
+  .card.accent-top{ position:relative; overflow:hidden; }
+  .card.accent-top::before{ content:""; position:absolute; top:0; left:0; right:0; height:3px;
+    background:linear-gradient(90deg,var(--orange),var(--purple2)); }
+  .grid{ display:grid; gap:12px; }
+  .g2{ grid-template-columns:1fr 1fr; }
+  .g3{ grid-template-columns:1fr 1fr 1fr; }
+  .g4{ grid-template-columns:1fr 1fr 1fr 1fr; }
+
+  .ico{ width:30px; height:30px; border-radius:9px; display:flex; align-items:center; justify-content:center;
+    background:rgba(30,74,128,.08); color:var(--blue); flex:none; }
+  .ico svg{ width:17px; height:17px; }
+  .ico.orange{ background:rgba(242,97,17,.10); color:var(--orange); }
+  .ico.purple{ background:rgba(90,75,196,.10); color:var(--purple); }
+  .ico.green{ background:rgba(22,163,74,.10); color:var(--success); }
+
+  /* ---------- quote / impact ---------- */
+  .quote{ position:relative; border-radius:14px; padding:20px 22px 20px 26px;
+    background:linear-gradient(115deg,var(--navy),#1a2f5c 60%,#3a2f6e);
+    color:#EAF0FA; box-shadow:var(--shadow); overflow:hidden; }
+  .quote::before{ content:"\201C"; position:absolute; left:12px; top:-6px; font-size:70px;
+    color:rgba(242,97,17,.55); font-family:Georgia,serif; }
+  .quote .qt{ font-size:16px; font-weight:750; line-height:1.35; letter-spacing:-.01em; position:relative; }
+  .quote .qs{ margin-top:8px; font-size:9.5px; color:#9FB4D6; letter-spacing:.05em; text-transform:uppercase; }
+
+  /* ---------- list ---------- */
+  ul.clean{ list-style:none; }
+  ul.clean li{ position:relative; padding-left:20px; margin:7px 0; color:var(--muted); font-size:11px; }
+  ul.clean li::before{ content:""; position:absolute; left:0; top:5px; width:9px; height:9px; border-radius:3px;
+    background:linear-gradient(135deg,var(--orange),var(--amber)); }
+  ul.check li::before{ content:"\2713"; background:none; color:var(--success); font-weight:900; font-size:12px; top:0; left:1px; }
+  ul.warn li::before{ background:linear-gradient(135deg,#E0576B,var(--danger)); }
+
+  /* ---------- badges/pills ---------- */
+  .pill{ display:inline-flex; align-items:center; gap:6px; font-size:9px; font-weight:700;
+    padding:4px 9px; border-radius:999px; letter-spacing:.03em; }
+  .pill.blue{ background:rgba(30,74,128,.09); color:var(--blue); }
+  .pill.orange{ background:rgba(242,97,17,.10); color:var(--orange); }
+  .pill.green{ background:rgba(22,163,74,.10); color:var(--success); }
+  .pill.gray{ background:#EEF1F7; color:var(--muted); }
+
+  /* ---------- table ---------- */
+  table.exec{ width:100%; border-collapse:separate; border-spacing:0; font-size:11px;
+    border:1px solid var(--line); border-radius:12px; overflow:hidden; box-shadow:var(--shadow-sm); background:#fff; }
+  table.exec thead th{ background:var(--navy); color:#fff; text-align:left; padding:11px 14px;
+    font-size:9.5px; letter-spacing:.08em; text-transform:uppercase; font-weight:700; }
+  table.exec tbody td{ padding:11px 14px; border-top:1px solid var(--line2); color:var(--muted); vertical-align:middle; }
+  table.exec tbody tr:nth-child(even){ background:#FAFBFE; }
+  table.exec td .it{ color:var(--navy); font-weight:750; font-size:11.5px; }
+  table.exec td.val{ text-align:right; color:var(--navy); font-weight:800; white-space:nowrap; }
+  table.exec td.val .u{ font-weight:600; color:var(--faint); font-size:9px; }
+
+  /* ---------- KPI strip ---------- */
+  .kpi{ background:#fff; border:1px solid var(--line); border-radius:12px; padding:13px 14px; box-shadow:var(--shadow-sm);
+    position:relative; overflow:hidden; }
+  .kpi::before{ content:""; position:absolute; left:0; top:0; bottom:0; width:3px; background:var(--orange); }
+  .kpi .n{ font-size:23px; font-weight:850; color:var(--navy); letter-spacing:-.02em; line-height:1; }
+  .kpi .l{ font-size:9.5px; color:var(--muted); margin-top:5px; line-height:1.35; }
+  .kpi.p2::before{ background:var(--purple2); } .kpi.p3::before{ background:var(--blue); } .kpi.p4::before{ background:var(--success); }
+
+  /* ---------- before/after ---------- */
+  .ba{ border-radius:14px; overflow:hidden; border:1px solid var(--line); box-shadow:var(--shadow-sm); }
+  .ba .hd{ padding:10px 14px; font-weight:800; font-size:11px; letter-spacing:.03em; color:#fff; display:flex; align-items:center; gap:8px; }
+  .ba.before .hd{ background:linear-gradient(90deg,#6B7280,#8A94A6); }
+  .ba.after .hd{ background:linear-gradient(90deg,var(--blue),var(--purple)); }
+  .ba .bd{ background:#fff; padding:6px 14px 12px; }
+
+  /* ---------- flow stepper ---------- */
+  .flow{ display:flex; align-items:stretch; gap:0; }
+  .step{ flex:1; position:relative; text-align:center; padding:0 4px; }
+  .step .dot{ width:34px; height:34px; border-radius:11px; margin:0 auto; display:flex; align-items:center; justify-content:center;
+    background:#fff; border:1.5px solid var(--line); color:var(--blue); box-shadow:var(--shadow-sm); position:relative; z-index:2; }
+  .step .dot svg{ width:17px; height:17px; }
+  .step .cap{ font-size:9px; font-weight:750; color:var(--navy); margin-top:7px; line-height:1.25; }
+  .step .sub{ font-size:8px; color:var(--faint); margin-top:2px; line-height:1.2; }
+  .step:not(:last-child)::after{ content:""; position:absolute; top:17px; left:60%; right:-40%; height:2px;
+    background:linear-gradient(90deg,var(--blue),var(--purple2)); z-index:1; opacity:.5; }
+
+  .tag-soft{ font-size:8.5px; color:var(--faint); letter-spacing:.06em; text-transform:uppercase; font-weight:700; }
+  .divider{ height:1px; background:var(--line); margin:14px 0; }
+  .note{ font-size:9px; color:var(--faint); font-style:italic; }
+  .premissa{ display:inline-flex; align-items:center; gap:6px; font-size:8.5px; font-weight:700; color:var(--amber);
+    background:rgba(217,119,6,.09); border-radius:6px; padding:3px 8px; letter-spacing:.02em; }
+</style>
+</head>
+<body>
+
+<!-- ============================ PAGE 1 — CAPA ============================ -->
+<section class="page" style="padding:0; background:linear-gradient(150deg,#0A1730 0%,#10224a 45%,#241f52 78%,#3a2668 100%);">
+  <!-- decorative -->
+  <div style="position:absolute; inset:0; overflow:hidden;">
+    <div style="position:absolute; width:520px; height:520px; right:-160px; top:-140px; border-radius:50%;
+      background:radial-gradient(circle at center, rgba(242,97,17,.28), rgba(242,97,17,0) 65%);"></div>
+    <div style="position:absolute; width:460px; height:460px; left:-150px; bottom:-160px; border-radius:50%;
+      background:radial-gradient(circle at center, rgba(122,91,224,.30), rgba(122,91,224,0) 65%);"></div>
+    <div style="position:absolute; inset:0; background-image:linear-gradient(rgba(255,255,255,.04) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.04) 1px,transparent 1px); background-size:34px 34px; opacity:.5;"></div>
+  </div>
+
+  <div style="position:relative; height:100%; display:flex; flex-direction:column; padding:20mm 18mm 16mm;">
+    <!-- top bar -->
+    <div style="display:flex; align-items:center; justify-content:space-between;">
+      <div style="background:#fff; border-radius:14px; padding:14px 20px; box-shadow:0 12px 30px rgba(0,0,0,.25);">
+        <img src="logo.png" alt="StiloWeb" style="height:52px; display:block;">
+      </div>
+      <div style="text-align:right; color:#AFC0DE; font-size:9px; letter-spacing:.14em; text-transform:uppercase; font-weight:700;">
+        Proposta Comercial<br><span style="color:#7E90B4; font-weight:600; letter-spacing:.05em;">Confidencial · 2026</span>
+      </div>
+    </div>
+
+    <!-- title block -->
+    <div style="margin-top:auto;">
+      <div class="kicker on-dark" style="color:#F2A06A;">MVP sob demanda · Belcar Caminhões</div>
+      <h1 style="color:#fff; font-size:44px; font-weight:850; line-height:1.05; letter-spacing:-.02em; margin-top:16px;">
+        Torre de Controle<br>de Estoque e<br><span style="color:#F2843C;">Fluxo Operacional</span>
+      </h1>
+      <p style="color:#C6D3EA; font-size:14px; max-width:430px; margin-top:18px; line-height:1.6;">
+        Uma central única para transformar estoque, preparação e entrega de veículos
+        em um fluxo visual, padronizado e gerenciável — base digital para automações e inteligência artificial.
+      </p>
+
+      <div style="display:flex; gap:10px; margin-top:22px; flex-wrap:wrap;">
+        <span style="font-size:9.5px; font-weight:700; color:#EAF0FA; background:rgba(255,255,255,.08); border:1px solid rgba(255,255,255,.14); padding:6px 12px; border-radius:999px;">Controle por etapas</span>
+        <span style="font-size:9.5px; font-weight:700; color:#EAF0FA; background:rgba(255,255,255,.08); border:1px solid rgba(255,255,255,.14); padding:6px 12px; border-radius:999px;">Visibilidade gerencial</span>
+        <span style="font-size:9.5px; font-weight:700; color:#EAF0FA; background:rgba(255,255,255,.08); border:1px solid rgba(255,255,255,.14); padding:6px 12px; border-radius:999px;">Pronto para IA</span>
+      </div>
+    </div>
+
+    <!-- footer meta -->
+    <div style="margin-top:34px; padding-top:18px; border-top:1px solid rgba(255,255,255,.14); display:flex; justify-content:space-between; gap:20px;">
+      <div>
+        <div style="color:#7E90B4; font-size:8.5px; letter-spacing:.14em; text-transform:uppercase; font-weight:700;">Solicitado por</div>
+        <div style="color:#fff; font-size:12.5px; font-weight:750; margin-top:5px;">Clarice Martins</div>
+        <div style="color:#AFC0DE; font-size:9.5px;">Coordenadora Administrativa Comercial · Belcar Caminhões</div>
+      </div>
+      <div style="text-align:right;">
+        <div style="color:#7E90B4; font-size:8.5px; letter-spacing:.14em; text-transform:uppercase; font-weight:700;">Apresentado por</div>
+        <div style="color:#fff; font-size:12.5px; font-weight:750; margin-top:5px;">StiloWeb Negócios Digitais</div>
+        <div style="color:#AFC0DE; font-size:9.5px;">Matheus Sizervincio · Carlos Henrique — Diretores</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================ PAGE 2 — O PROBLEMA ============================ -->
+<section class="page">
+  <div class="rh"><div class="brand">STILO<span>WEB</span> · Negócios Digitais</div><div>Torre de Controle Belcar</div></div>
+
+  <div class="kicker">01 · O cenário atual</div>
+  <h1 class="h1 mt10">Quando a informação está dispersa,<br>a operação trabalha mais para enxergar menos.</h1>
+  <p class="lead mt14" style="max-width:520px;">
+    A operação de estoque e preparação de veículos hoje é conduzida por controles paralelos e comunicação informal.
+    O dado existe — mas está fragmentado, sem dono e sem etapa clara. O resultado é tempo perdido em conferência
+    e decisões tomadas no escuro.
+  </p>
+
+  <div class="grid g2 mt24">
+    <div class="card">
+      <div class="ico orange"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3h18v4H3zM5 7v13h14V7M9 11h6"/></svg></div>
+      <div class="h3 mt10">Informação espalhada</div>
+      <p class="mt6">Estoque, agenda, movimentação e entregas vivem em frentes separadas. Cruzar dados depende de memória e de quem estava na conversa.</p>
+    </div>
+    <div class="card">
+      <div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 8v5l3 2"/><circle cx="12" cy="12" r="9"/></svg></div>
+      <div class="h3 mt10">Sem visão por etapa</div>
+      <p class="mt6">É difícil responder rápido "onde está cada veículo no fluxo?" — em preparação, aguardando pagamento, pronto para liberar ou já a caminho.</p>
+    </div>
+    <div class="card">
+      <div class="ico purple"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7h16M4 12h10M4 17h7"/></svg></div>
+      <div class="h3 mt10">Controles paralelos</div>
+      <p class="mt6">Planilhas, mensagens e anotações que se sobrepõem. Cada área mantém sua própria versão da verdade — e elas divergem.</p>
+    </div>
+    <div class="card">
+      <div class="ico green"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 1 0 9-9M3 12l3-3M3 12l3 3"/></svg></div>
+      <div class="h3 mt10">Retrabalho entre áreas</div>
+      <p class="mt6">Falta de histórico centralizado gera reconferência, cobrança sem rastro e a mesma pergunta feita várias vezes ao longo do dia.</p>
+    </div>
+  </div>
+
+  <div class="mt18" style="display:flex; gap:12px;">
+    <div class="card" style="flex:1; padding:13px 15px;">
+      <div class="tag-soft">O custo invisível</div>
+      <p class="mt6" style="font-size:10.5px;">Cada conferência manual, cada "deixa eu confirmar" e cada retrabalho consomem horas que não aparecem em nenhum relatório — mas pesam na entrega.</p>
+    </div>
+    <div class="card" style="flex:1; padding:13px 15px;">
+      <div class="tag-soft">O risco da operação manual</div>
+      <p class="mt6" style="font-size:10.5px;">Sem trava de processo, um veículo pode avançar sem NF, sem responsável ou sem pendência resolvida — e o erro só aparece na hora da entrega.</p>
+    </div>
+  </div>
+
+  <div class="quote mt18">
+    <div class="qt">Não falta esforço à equipe. Falta uma visão única que transforme dado disperso em decisão.</div>
+    <div class="qs">O problema não é de pessoas — é de estrutura de informação</div>
+  </div>
+
+  <div class="rf"><span class="lock"><svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>Documento comercial confidencial · Uso restrito Belcar Caminhões</span><span class="pageno">02 / 16</span></div>
+</section>
+
+<!-- ============================ PAGE 3 — A SOLUÇÃO ============================ -->
+<section class="page">
+  <div class="rh"><div class="brand">STILO<span>WEB</span> · Negócios Digitais</div><div>Torre de Controle Belcar</div></div>
+
+  <div class="kicker">02 · A solução</div>
+  <h1 class="h1 mt10">Uma visão única para controlar<br>estoque, fluxo e prioridades.</h1>
+  <p class="lead mt14" style="max-width:530px;">
+    A Torre de Controle centraliza a operação em uma plataforma modular. Em vez de reconstruir o quadro mentalmente
+    a cada consulta, a equipe passa a enxergar o estoque inteiro organizado por etapa, com responsável, pendência e
+    próximo passo visíveis em um só lugar.
+  </p>
+
+  <div class="grid g3 mt24">
+    <div class="card accent-top">
+      <div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="8" height="8" rx="1.5"/><rect x="13" y="3" width="8" height="5" rx="1.5"/><rect x="13" y="10" width="8" height="11" rx="1.5"/><rect x="3" y="13" width="8" height="8" rx="1.5"/></svg></div>
+      <div class="h3 mt10">Centraliza a informação</div>
+      <p class="mt6">Todo o histórico de cada veículo em um único lugar, acessível por qualquer área a qualquer momento.</p>
+    </div>
+    <div class="card accent-top">
+      <div class="ico orange"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12h4l3-8 4 16 3-8h4"/></svg></div>
+      <div class="h3 mt10">Organiza por etapas</div>
+      <p class="mt6">Cada veículo caminha por um fluxo claro e padronizado — nada avança pulando o que precisa ser feito.</p>
+    </div>
+    <div class="card accent-top">
+      <div class="ico purple"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18"/><path d="M7 14l3-3 3 3 4-5"/></svg></div>
+      <div class="h3 mt10">Apoia a decisão</div>
+      <p class="mt6">Indicadores e alertas mostram o que está travado e o que é prioridade, sem depender de relatório manual.</p>
+    </div>
+    <div class="card accent-top">
+      <div class="ico green"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 12l5 5L20 6"/></svg></div>
+      <div class="h3 mt10">Reduz o manual</div>
+      <p class="mt6">Menos dependência de planilhas paralelas e menos reconferência: a informação nasce padronizada.</p>
+    </div>
+    <div class="card accent-top">
+      <div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 8a5 5 0 0 0-10 0v3l-2 4h14l-2-4z"/><path d="M9 18a3 3 0 0 0 6 0"/></svg></div>
+      <div class="h3 mt10">Melhora a comunicação</div>
+      <p class="mt6">Áreas diferentes olham para a mesma fonte, com o mesmo status — o alinhamento deixa de depender de mensagem.</p>
+    </div>
+    <div class="card accent-top">
+      <div class="ico purple"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M19 5l-2 2M7 17l-2 2"/></svg></div>
+      <div class="h3 mt10">Preparada para IA</div>
+      <p class="mt6">Com dados estruturados e histórico consistente, a operação fica pronta para automações e agentes inteligentes.</p>
+    </div>
+  </div>
+
+  <div class="quote mt24">
+    <div class="qt">O MVP transforma o controle de estoque em uma torre de comando operacional — conectando dados, etapas, equipe e decisões em um fluxo único, visual e gerenciável.</div>
+    <div class="qs">Posicionamento da solução</div>
+  </div>
+
+  <div class="rf"><span class="lock"><svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>Documento comercial confidencial · Uso restrito Belcar Caminhões</span><span class="pageno">03 / 16</span></div>
+</section>
+
+<!-- ============================ PAGE 4 — COMO O MVP FUNCIONA ============================ -->
+<section class="page">
+  <div class="rh"><div class="brand">STILO<span>WEB</span> · Negócios Digitais</div><div>Torre de Controle Belcar</div></div>
+
+  <div class="kicker">03 · Como o MVP funciona</div>
+  <h1 class="h1 mt10">Do pátio à entrega, um fluxo<br>visual que ninguém perde de vista.</h1>
+  <p class="lead mt14" style="max-width:520px;">
+    Cada veículo percorre uma linha de etapas claras. Em cada ponto do fluxo, a operação sabe exatamente o que já
+    aconteceu, o que falta e de quem é a próxima ação — sem depender de consulta manual.
+  </p>
+
+  <div class="card mt24" style="padding:22px 18px;">
+    <div class="flow">
+      <div class="step">
+        <div class="dot"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 13h13l3-5H6zM3 13v4h2M16 17h2M8 20a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3zM17 20a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3z"/></svg></div>
+        <div class="cap">Entrada</div><div class="sub">Veículo chega ao controle</div>
+      </div>
+      <div class="step">
+        <div class="dot"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M3 11h18M8 3v4M16 3v4"/></svg></div>
+        <div class="cap">Estoque</div><div class="sub">Situado e localizado</div>
+      </div>
+      <div class="step">
+        <div class="dot"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 3l7 7-4 4-7-7zM10 11l-7 7 3 3 7-7"/></svg></div>
+        <div class="cap">Preparação</div><div class="sub">Lavagem, acessórios</div>
+      </div>
+      <div class="step">
+        <div class="dot"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3l9 4v5c0 5-3.5 8-9 9-5.5-1-9-4-9-9V7z"/><path d="M9 12l2 2 4-4"/></svg></div>
+        <div class="cap">Pendências</div><div class="sub">NF, pagamento, campanha</div>
+      </div>
+      <div class="step">
+        <div class="dot"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 12l5 5L20 6"/></svg></div>
+        <div class="cap">Liberação</div><div class="sub">Pronto para entregar</div>
+      </div>
+      <div class="step">
+        <div class="dot"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M3 9h18M8 2v4M16 2v4M8 14h4"/></svg></div>
+        <div class="cap">Acompanhamento</div><div class="sub">Agenda e entrega</div>
+      </div>
+      <div class="step">
+        <div class="dot"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18"/><path d="M7 13l3 3 7-8"/></svg></div>
+        <div class="cap">Visão gerencial</div><div class="sub">Indicadores e alertas</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="grid g3 mt18">
+    <div class="card">
+      <div class="h3">Nada avança sem estar pronto</div>
+      <p class="mt6">Regras de governança impedem que um veículo pule etapa sem documento, responsável ou pendência resolvida — o processo protege a operação de si mesma.</p>
+    </div>
+    <div class="card">
+      <div class="h3">Fluxos paralelos conectados</div>
+      <p class="mt6">Movimentação física, agenda de entrega e instalação de acessórios correm em trilhas próprias, sempre alimentando a etapa principal do veículo.</p>
+    </div>
+    <div class="card">
+      <div class="h3">Histórico que não se apaga</div>
+      <p class="mt6">Cada mudança fica registrada em uma linha do tempo. A qualquer momento é possível saber o que aconteceu, quando e por quem — rastreabilidade real.</p>
+    </div>
+  </div>
+
+  <div class="mt18"><span class="premissa">◆ Premissa comercial adotada</span>
+  <span class="note"> &nbsp;A representação acima é conceitual e simplificada para fins comerciais; não reflete a lógica interna do sistema.</span></div>
+
+  <div class="rf"><span class="lock"><svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>Documento comercial confidencial · Uso restrito Belcar Caminhões</span><span class="pageno">04 / 16</span></div>
+</section>
+
+<!-- ============================ PAGE 5 — MÓDULOS ============================ -->
+<section class="page">
+  <div class="rh"><div class="brand">STILO<span>WEB</span> · Negócios Digitais</div><div>Torre de Controle Belcar</div></div>
+
+  <div class="kicker">04 · Módulos do sistema</div>
+  <h1 class="h1 mt10">Uma plataforma modular,<br>pensada para crescer por partes.</h1>
+  <p class="lead mt14" style="max-width:520px;">
+    Cada módulo resolve uma dor específica da operação e conversa com os demais. O MVP entrega o núcleo funcional;
+    os módulos evoluem sob demanda, no ritmo da Belcar.
+  </p>
+
+  <div class="grid g3 mt20" style="gap:11px;">
+    <!-- module card generator -->
+    <div class="card" style="padding:13px 14px;"><div style="display:flex; gap:9px; align-items:center;"><div class="ico" style="width:26px;height:26px;border-radius:8px;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18"/><path d="M7 13l3 3 7-8"/></svg></div><div class="h3" style="font-size:11.5px;">Dashboard operacional</div></div><p class="mt6" style="font-size:9.5px;">Visão executiva consolidada com indicadores e alertas críticos.</p></div>
+
+    <div class="card" style="padding:13px 14px;"><div style="display:flex; gap:9px; align-items:center;"><div class="ico orange" style="width:26px;height:26px;border-radius:8px;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M3 11h18M8 3v4M16 3v4"/></svg></div><div class="h3" style="font-size:11.5px;">Gestão de estoque</div></div><p class="mt6" style="font-size:9.5px;">A vida de cada veículo, identificada por chassi, do pátio à entrega.</p></div>
+
+    <div class="card" style="padding:13px 14px;"><div style="display:flex; gap:9px; align-items:center;"><div class="ico purple" style="width:26px;height:26px;border-radius:8px;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 3l7 7-4 4-7-7zM10 11l-7 7 3 3 7-7"/></svg></div><div class="h3" style="font-size:11.5px;">Controle de preparação</div></div><p class="mt6" style="font-size:9.5px;">Tarefas de preparação com responsável, prazo, checklist e evidência.</p></div>
+
+    <div class="card" style="padding:13px 14px;"><div style="display:flex; gap:9px; align-items:center;"><div class="ico green" style="width:26px;height:26px;border-radius:8px;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="7" height="16" rx="1"/><rect x="14" y="4" width="7" height="10" rx="1"/></svg></div><div class="h3" style="font-size:11.5px;">Acompanhamento por status</div></div><p class="mt6" style="font-size:9.5px;">Quadro visual das etapas em fases — o fluxo inteiro em uma tela.</p></div>
+
+    <div class="card" style="padding:13px 14px;"><div style="display:flex; gap:9px; align-items:center;"><div class="ico" style="width:26px;height:26px;border-radius:8px;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3l9 4v5c0 5-3.5 8-9 9-5.5-1-9-4-9-9V7z"/></svg></div><div class="h3" style="font-size:11.5px;">Gestão de pendências</div></div><p class="mt6" style="font-size:9.5px;">Recall, avaria, oficina e documentação sinalizadas e controladas.</p></div>
+
+    <div class="card" style="padding:13px 14px;"><div style="display:flex; gap:9px; align-items:center;"><div class="ico orange" style="width:26px;height:26px;border-radius:8px;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v6l4 2M3 8h4M3 12h3M3 16h5"/><circle cx="14" cy="12" r="8"/></svg></div><div class="h3" style="font-size:11.5px;">Faturamento</div></div><p class="mt6" style="font-size:9.5px;">Situação de NF, pagamento e tipo de venda, com bloqueios claros.</p></div>
+
+    <div class="card" style="padding:13px 14px;"><div style="display:flex; gap:9px; align-items:center;"><div class="ico purple" style="width:26px;height:26px;border-radius:8px;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 13h13l3-5H6zM8 20a1.5 1.5 0 1 0 0-3M17 20a1.5 1.5 0 1 0 0-3"/></svg></div><div class="h3" style="font-size:11.5px;">Movimentação física</div></div><p class="mt6" style="font-size:9.5px;">Fila de movimentação por prioridade — retirada, destino, chegada.</p></div>
+
+    <div class="card" style="padding:13px 14px;"><div style="display:flex; gap:9px; align-items:center;"><div class="ico green" style="width:26px;height:26px;border-radius:8px;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M3 9h18M8 2v4M16 2v4"/></svg></div><div class="h3" style="font-size:11.5px;">Agenda de entrega técnica</div></div><p class="mt6" style="font-size:9.5px;">Programação diária e semanal das entregas, com responsável.</p></div>
+
+    <div class="card" style="padding:13px 14px;"><div style="display:flex; gap:9px; align-items:center;"><div class="ico" style="width:26px;height:26px;border-radius:8px;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l8 4v6c0 5-3 8-8 10-5-2-8-5-8-10V6z"/><path d="M9 12l2 2 4-4"/></svg></div><div class="h3" style="font-size:11.5px;">Agenda de acessórios</div></div><p class="mt6" style="font-size:9.5px;">Fila de instalação de acessórios com valor e ordem de serviço.</p></div>
+
+    <div class="card" style="padding:13px 14px;"><div style="display:flex; gap:9px; align-items:center;"><div class="ico orange" style="width:26px;height:26px;border-radius:8px;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 7L9 18l-5-5"/></svg></div><div class="h3" style="font-size:11.5px;">Histórico de entregues</div></div><p class="mt6" style="font-size:9.5px;">Consulta histórica de tudo que já foi entregue e encerrado.</p></div>
+
+    <div class="card" style="padding:13px 14px;"><div style="display:flex; gap:9px; align-items:center;"><div class="ico purple" style="width:26px;height:26px;border-radius:8px;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg></div><div class="h3" style="font-size:11.5px;">Cadastros de apoio</div></div><p class="mt6" style="font-size:9.5px;">Vendedores, locais, implementos e motivos padronizados.</p></div>
+
+    <div class="card" style="padding:13px 14px;"><div style="display:flex; gap:9px; align-items:center;"><div class="ico green" style="width:26px;height:26px;border-radius:8px;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16v16H4z" opacity=".0"/><path d="M7 15l3-3 2 2 5-6M5 4h14v16H5z"/></svg></div><div class="h3" style="font-size:11.5px;">Relatórios gerenciais</div></div><p class="mt6" style="font-size:9.5px;">Produtividade, custo de preparação e prazos, com exportação.</p></div>
+  </div>
+
+  <div class="card mt18" style="background:linear-gradient(100deg,#0C1B3A,#241f52); border:none; color:#EAF0FA; display:flex; align-items:center; gap:14px;">
+    <div class="ico purple" style="background:rgba(255,255,255,.10); color:#F2A06A;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M19 5l-2 2M7 17l-2 2"/></svg></div>
+    <div><div style="font-weight:800; font-size:12px; color:#fff;">Base para automações futuras</div>
+    <p style="color:#C6D3EA; font-size:10px; margin-top:3px;">Todos os módulos alimentam uma base estruturada — o solo fértil para alertas inteligentes, resumos automáticos e agentes de acompanhamento.</p></div>
+  </div>
+
+  <div class="rf"><span class="lock"><svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>Documento comercial confidencial · Uso restrito Belcar Caminhões</span><span class="pageno">05 / 16</span></div>
+</section>
+
+<!-- ============================ PAGE 6 — GANHOS PARA A EQUIPE ============================ -->
+<section class="page">
+  <div class="rh"><div class="brand">STILO<span>WEB</span> · Negócios Digitais</div><div>Torre de Controle Belcar</div></div>
+
+  <div class="kicker">05 · Ganhos para a equipe</div>
+  <h1 class="h1 mt10">Menos tempo procurando,<br>mais tempo entregando.</h1>
+  <p class="lead mt14" style="max-width:520px;">
+    Na prática do dia a dia, a mudança é sentida por quem opera. A informação deixa de ser caçada e passa a estar
+    onde deveria estar — clara, atualizada e no contexto certo.
+  </p>
+
+  <div class="grid g2 mt24" style="gap:14px;">
+    <div class="ba before">
+      <div class="hd"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M15 9l-6 6M9 9l6 6"/></svg> Antes · Operação manual</div>
+      <div class="bd">
+        <ul class="clean warn">
+          <li>Procurar em várias planilhas onde o veículo está</li>
+          <li>Refazer conferências já feitas por outra pessoa</li>
+          <li>Dúvida sobre qual é a prioridade real do dia</li>
+          <li>Cobrança sem rastro do que ficou combinado</li>
+          <li>Retrabalho quando a informação diverge entre áreas</li>
+          <li>Surpresas de última hora na preparação e entrega</li>
+        </ul>
+      </div>
+    </div>
+    <div class="ba after">
+      <div class="hd"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M8 12l3 3 5-6"/></svg> Depois · Torre de Controle</div>
+      <div class="bd">
+        <ul class="clean check">
+          <li>Situação de cada veículo visível em segundos</li>
+          <li>Conferência registrada uma vez, válida para todos</li>
+          <li>Prioridades e pendências evidentes na tela</li>
+          <li>Responsável e histórico claros para cobrança justa</li>
+          <li>Fonte única: todas as áreas veem o mesmo status</li>
+          <li>Previsibilidade de preparação e liberação</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div class="grid g3 mt20">
+    <div class="card" style="text-align:center;"><div style="font-size:11px; font-weight:800; color:var(--orange); letter-spacing:.05em; text-transform:uppercase;">Clareza</div><p class="mt6" style="font-size:10px;">Cada um sabe o que fazer hoje, sem depender de quem estava na conversa.</p></div>
+    <div class="card" style="text-align:center;"><div style="font-size:11px; font-weight:800; color:var(--purple); letter-spacing:.05em; text-transform:uppercase;">Segurança</div><p class="mt6" style="font-size:10px;">Cobrança interna com base em registro, não em memória ou suposição.</p></div>
+    <div class="card" style="text-align:center;"><div style="font-size:11px; font-weight:800; color:var(--success); letter-spacing:.05em; text-transform:uppercase;">Fluidez</div><p class="mt6" style="font-size:10px;">Menos ruído entre áreas, menos idas e vindas, mais ritmo de entrega.</p></div>
+  </div>
+
+  <div class="quote mt20" style="background:linear-gradient(115deg,#123a2a,#15532f 70%,#1f6b3d);">
+    <div class="qt" style="color:#EAFBF0;">Quando a equipe para de reconstruir o quadro a cada consulta, sobra energia para o que realmente importa: preparar e entregar.</div>
+    <div class="qs" style="color:#9FD9B4;">Ganho de tempo como vantagem operacional</div>
+  </div>
+
+  <div class="rf"><span class="lock"><svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>Documento comercial confidencial · Uso restrito Belcar Caminhões</span><span class="pageno">06 / 16</span></div>
+</section>
+
+<!-- ============================ PAGE 7 — GANHOS PARA A GESTÃO ============================ -->
+<section class="page">
+  <div class="rh"><div class="brand">STILO<span>WEB</span> · Negócios Digitais</div><div>Torre de Controle Belcar</div></div>
+
+  <div class="kicker">06 · Ganhos para a gestão</div>
+  <h1 class="h1 mt10">O estoque deixa de ser registro<br>e vira operação gerenciável.</h1>
+  <p class="lead mt14" style="max-width:520px;">
+    Para a coordenação e a diretoria, a Torre de Controle entrega o que a planilha nunca deu: visão consolidada,
+    controle de gargalos e capacidade de decidir com base em dados — não em percepção.
+  </p>
+
+  <div class="grid g2 mt22" style="gap:14px;">
+    <div class="card">
+      <div style="display:flex; gap:10px; align-items:center;"><div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="12" width="4" height="8"/><rect x="10" y="7" width="4" height="13"/><rect x="17" y="3" width="4" height="17"/></svg></div><div class="h3">Visão consolidada</div></div>
+      <p class="mt6">Todo o estoque e o fluxo em uma leitura só — quantos veículos, em que etapa, com que pendência.</p>
+    </div>
+    <div class="card">
+      <div style="display:flex; gap:10px; align-items:center;"><div class="ico orange"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 9v4M12 17h.01"/><path d="M10.3 3.9L2 18a2 2 0 0 0 1.7 3h16.6A2 2 0 0 0 22 18L13.7 3.9a2 2 0 0 0-3.4 0z"/></svg></div><div class="h3">Controle de gargalos</div></div>
+      <p class="mt6">Onde o fluxo trava fica evidente. Atrasos e riscos aparecem antes de virarem problema na entrega.</p>
+    </div>
+    <div class="card">
+      <div style="display:flex; gap:10px; align-items:center;"><div class="ico purple"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18"/><path d="M7 14l3-3 3 3 4-6"/></svg></div><div class="h3">Indicadores operacionais</div></div>
+      <p class="mt6">Produtividade, tempo por etapa e custo de preparação como base para gestão e para medir evolução.</p>
+    </div>
+    <div class="card">
+      <div style="display:flex; gap:10px; align-items:center;"><div class="ico green"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></div><div class="h3">Previsibilidade de fluxo</div></div>
+      <p class="mt6">Enxergar o que vem pela frente permite planejar equipe, pátio e agenda com antecedência.</p>
+    </div>
+  </div>
+
+  <div class="grid g4 mt18">
+    <div class="kpi"><div class="n">1.642</div><div class="l">veículos consolidados em uma base única</div></div>
+    <div class="kpi p2"><div class="n">7 → 1</div><div class="l">frentes dispersas reunidas em um só fluxo</div></div>
+    <div class="kpi p3"><div class="n">3</div><div class="l">fases operacionais claras, do pátio à entrega</div></div>
+    <div class="kpi p4"><div class="n">100%</div><div class="l">das mudanças com histórico rastreável</div></div>
+  </div>
+  <div class="note mt6">Números derivados da consolidação inicial de dados reais da operação. <span class="premissa" style="margin-left:4px;">◆ Base para mensuração futura de ROI</span></div>
+
+  <div class="quote mt18">
+    <div class="qt">O sistema não apenas registra informações. Ele transforma o estoque em uma operação gerenciável.</div>
+    <div class="qs">Da percepção para a decisão baseada em dados</div>
+  </div>
+
+  <div class="rf"><span class="lock"><svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>Documento comercial confidencial · Uso restrito Belcar Caminhões</span><span class="pageno">07 / 16</span></div>
+</section>
+
+<!-- ============================ PAGE 8 — IA E EVOLUÇÃO ============================ -->
+<section class="page">
+  <div class="rh"><div class="brand">STILO<span>WEB</span> · Negócios Digitais</div><div>Torre de Controle Belcar</div></div>
+
+  <div class="kicker">07 · Inteligência artificial e evolução</div>
+  <h1 class="h1 mt10">A base de hoje é o que torna<br>a inteligência de amanhã possível.</h1>
+  <p class="lead mt14" style="max-width:530px;">
+    A IA não é o ponto de partida — é a consequência natural de ter dados organizados. Com a operação estruturada,
+    abre-se um caminho de evolução opcional, avaliado sob consulta, conforme escopo e maturidade dos dados.
+  </p>
+
+  <div class="grid g2 mt22" style="gap:12px;">
+    <div class="card"><div style="display:flex; gap:9px; align-items:center;"><div class="ico purple" style="width:26px;height:26px;border-radius:8px;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7h16M4 12h10M4 17h6"/></svg></div><div class="h3" style="font-size:11.5px;">Classificação de pendências</div></div><p class="mt6" style="font-size:9.5px;">Organização automática do que é urgente, bloqueante ou rotina.</p></div>
+    <div class="card"><div style="display:flex; gap:9px; align-items:center;"><div class="ico orange" style="width:26px;height:26px;border-radius:8px;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3a6 6 0 0 0-6 6v3l-2 4h16l-2-4V9a6 6 0 0 0-6-6z"/><path d="M10 20a2 2 0 0 0 4 0"/></svg></div><div class="h3" style="font-size:11.5px;">Alertas inteligentes de atraso</div></div><p class="mt6" style="font-size:9.5px;">Aviso antecipado quando um veículo tende a estourar o prazo.</p></div>
+    <div class="card"><div style="display:flex; gap:9px; align-items:center;"><div class="ico" style="width:26px;height:26px;border-radius:8px;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 5h16M4 10h16M4 15h10"/></svg></div><div class="h3" style="font-size:11.5px;">Resumos gerenciais automáticos</div></div><p class="mt6" style="font-size:9.5px;">Panorama do dia gerado sozinho, pronto para a coordenação.</p></div>
+    <div class="card"><div style="display:flex; gap:9px; align-items:center;"><div class="ico green" style="width:26px;height:26px;border-radius:8px;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 17l6-6 4 4 8-8"/><path d="M14 7h7v7"/></svg></div><div class="h3" style="font-size:11.5px;">Priorização de veículos críticos</div></div><p class="mt6" style="font-size:9.5px;">Sugestão de foco com base em risco, prazo e importância.</p></div>
+    <div class="card"><div style="display:flex; gap:9px; align-items:center;"><div class="ico purple" style="width:26px;height:26px;border-radius:8px;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l-2 3M15 18l2 3M6 4h12l1 8a7 7 0 0 1-14 0z"/></svg></div><div class="h3" style="font-size:11.5px;">Agentes de acompanhamento</div></div><p class="mt6" style="font-size:9.5px;">Assistentes que monitoram o fluxo e sugerem a próxima ação.</p></div>
+    <div class="card"><div style="display:flex; gap:9px; align-items:center;"><div class="ico orange" style="width:26px;height:26px;border-radius:8px;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16v12H8l-4 4z"/></svg></div><div class="h3" style="font-size:11.5px;">Integrações de comunicação</div></div><p class="mt6" style="font-size:9.5px;">WhatsApp, e-mail ou sistemas internos — quando tecnicamente viável.</p></div>
+  </div>
+
+  <div class="card mt18" style="border-left:3px solid var(--amber); background:rgba(217,119,6,.05);">
+    <div style="display:flex; gap:10px; align-items:flex-start;">
+      <div class="ico orange" style="width:26px;height:26px;border-radius:8px;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 9v4M12 17h.01"/><circle cx="12" cy="12" r="9"/></svg></div>
+      <div><div class="h3" style="font-size:11.5px;">IA como camada opcional, não incluída no MVP</div>
+      <p class="mt6" style="font-size:10px;">Integrações de IA e agentes inteligentes serão avaliadas sob consulta, conforme escopo, dados disponíveis, segurança e complexidade. O MVP entrega a base sólida que torna essa evolução viável e mensurável — sem promessas automáticas.</p></div>
+    </div>
+  </div>
+
+  <div class="rf"><span class="lock"><svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>Documento comercial confidencial · Uso restrito Belcar Caminhões</span><span class="pageno">08 / 16</span></div>
+</section>
+
+<!-- ============================ PAGE 9 — ESCOPO MVP ============================ -->
+<section class="page">
+  <div class="rh"><div class="brand">STILO<span>WEB</span> · Negócios Digitais</div><div>Torre de Controle Belcar</div></div>
+
+  <div class="kicker">08 · Escopo comercial do MVP</div>
+  <h1 class="h1 mt10">A primeira etapa estruturada<br>de uma operação digital.</h1>
+  <p class="lead mt14" style="max-width:520px;">
+    O MVP é a versão estratégica e evolutiva do sistema: entrega funcional do núcleo operacional, validada com a
+    equipe, e pronta para crescer sob demanda.
+  </p>
+
+  <div class="mt24" style="display:flex; gap:18px; align-items:stretch;">
+    <div class="card accent-top" style="flex:1.1; display:flex; flex-direction:column; justify-content:center; padding:24px;">
+      <div class="tag-soft">Desenvolvimento do MVP</div>
+      <div style="font-size:44px; font-weight:850; color:var(--navy); letter-spacing:-.02em; margin-top:6px; line-height:1;">R$ 24.000<span style="font-size:20px; color:var(--muted);">,00</span></div>
+      <p class="mt10" style="font-size:10px;">Valor baseado em, no mínimo, <span class="em">120 horas</span> de desenvolvimento, análise, estruturação, design, testes e entrega funcional.</p>
+      <div class="divider"></div>
+      <div style="display:flex; gap:8px; flex-wrap:wrap;">
+        <span class="pill blue">Entrega funcional</span>
+        <span class="pill orange">Validação operacional</span>
+        <span class="pill gray">Evolutivo</span>
+      </div>
+    </div>
+
+    <div class="card" style="flex:1.4;">
+      <div class="h3">O MVP contempla</div>
+      <ul class="clean check mt6">
+        <li>Entendimento do fluxo operacional real da Belcar</li>
+        <li>Estruturação da solução e do modelo de informação</li>
+        <li>Desenvolvimento inicial dos módulos principais</li>
+        <li>Organização do fluxo em etapas e fases</li>
+        <li>Entrega funcional navegável e utilizável</li>
+        <li>Ajustes essenciais durante a implantação</li>
+        <li>Validação operacional com a equipe</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="grid g3 mt20">
+    <div class="card" style="text-align:center; padding:14px;"><div style="font-size:20px; font-weight:850; color:var(--purple);">120h+</div><div class="l" style="font-size:9.5px; color:var(--muted); margin-top:4px;">de trabalho dedicado</div></div>
+    <div class="card" style="text-align:center; padding:14px;"><div style="font-size:20px; font-weight:850; color:var(--orange);">Sob demanda</div><div class="l" style="font-size:9.5px; color:var(--muted); margin-top:4px;">construído para a Belcar</div></div>
+    <div class="card" style="text-align:center; padding:14px;"><div style="font-size:20px; font-weight:850; color:var(--success);">Evolutivo</div><div class="l" style="font-size:9.5px; color:var(--muted); margin-top:4px;">cresce por fases</div></div>
+  </div>
+
+  <div class="note mt18">O escopo contempla as funcionalidades identificadas e acordadas para o MVP. Novas funcionalidades seguem o modelo de novos desenvolvimentos (pág. 11). <span class="premissa" style="margin-left:4px;">◆ Premissa comercial adotada</span></div>
+
+  <div class="rf"><span class="lock"><svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>Documento comercial confidencial · Uso restrito Belcar Caminhões</span><span class="pageno">09 / 16</span></div>
+</section>
+
+<!-- ============================ PAGE 10 — SUPORTE MENSAL ============================ -->
+<section class="page">
+  <div class="rh"><div class="brand">STILO<span>WEB</span> · Negócios Digitais</div><div>Torre de Controle Belcar</div></div>
+
+  <div class="kicker">09 · Assistência e suporte mensal</div>
+  <h1 class="h1 mt10">Continuidade operacional,<br>mês a mês.</h1>
+  <p class="lead mt14" style="max-width:520px;">
+    O suporte garante que a Torre de Controle siga estável, atualizada e bem utilizada — uma camada de tranquilidade
+    para a operação, separada de novos desenvolvimentos.
+  </p>
+
+  <div class="mt24" style="display:flex; gap:18px; align-items:stretch;">
+    <div class="card accent-top" style="flex:1; display:flex; flex-direction:column; justify-content:center; padding:24px;">
+      <div class="tag-soft">Assistência e suporte mensal</div>
+      <div style="font-size:42px; font-weight:850; color:var(--navy); letter-spacing:-.02em; margin-top:6px; line-height:1;">R$ 850<span style="font-size:18px; color:var(--muted);">,00/mês</span></div>
+      <p class="mt10" style="font-size:10px;">Recorrência mensal (MRR) de acompanhamento e estabilidade da plataforma.</p>
+      <div class="divider"></div>
+      <span class="pill green">Previsível · mensal</span>
+    </div>
+
+    <div class="card" style="flex:1.5;">
+      <div class="h3">O que está incluído</div>
+      <div class="grid g2 mt6" style="gap:2px 18px;">
+        <ul class="clean check"><li>Acompanhamento técnico</li><li>Correções de estabilidade</li><li>Suporte operacional</li><li>Pequenos ajustes</li></ul>
+        <ul class="clean check"><li>Monitoramento básico</li><li>Orientações de uso</li><li>Apoio na evolução do sistema</li><li>Canal direto com a StiloWeb</li></ul>
+      </div>
+    </div>
+  </div>
+
+  <div class="card mt20" style="border-left:3px solid var(--blue); background:rgba(30,74,128,.04);">
+    <div style="display:flex; gap:10px; align-items:center;">
+      <div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3l9 4v5c0 5-3.5 8-9 9-5.5-1-9-4-9-9V7z"/><path d="M9 12l2 2 4-4"/></svg></div>
+      <div><div class="h3" style="font-size:11.5px;">Suporte é diferente de novo desenvolvimento</div>
+      <p class="mt6" style="font-size:10px;">O suporte mantém o que existe funcionando bem. A criação de novos módulos, integrações ou mudanças relevantes de fluxo segue o modelo de novos desenvolvimentos, detalhado a seguir.</p></div>
+    </div>
+  </div>
+
+  <div class="rf"><span class="lock"><svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>Documento comercial confidencial · Uso restrito Belcar Caminhões</span><span class="pageno">10 / 16</span></div>
+</section>
+
+<!-- ============================ PAGE 11 — NOVOS DESENVOLVIMENTOS ============================ -->
+<section class="page">
+  <div class="rh"><div class="brand">STILO<span>WEB</span> · Negócios Digitais</div><div>Torre de Controle Belcar</div></div>
+
+  <div class="kicker">10 · Novos desenvolvimentos</div>
+  <h1 class="h1 mt10">A plataforma cresce<br>no ritmo da operação.</h1>
+  <p class="lead mt14" style="max-width:520px;">
+    Além do MVP e do suporte, toda nova demanda de construção é tratada por hora de desenvolvimento — transparente,
+    proporcional ao escopo e priorizada junto com a Belcar.
+  </p>
+
+  <div class="mt24" style="display:flex; gap:18px; align-items:stretch;">
+    <div class="card accent-top" style="flex:1; display:flex; flex-direction:column; justify-content:center; padding:24px; text-align:left;">
+      <div class="tag-soft">Novos desenvolvimentos</div>
+      <div style="font-size:42px; font-weight:850; color:var(--navy); letter-spacing:-.02em; margin-top:6px; line-height:1;">R$ 250<span style="font-size:18px; color:var(--muted);">,00/hora</span></div>
+      <p class="mt10" style="font-size:10px;">Por desenvolvedor. Escopo e estimativa apresentados e aprovados antes de iniciar.</p>
+      <div class="divider"></div>
+      <span class="pill orange">Sob demanda · aprovado antes</span>
+    </div>
+
+    <div class="card" style="flex:1.5;">
+      <div class="h3">Entram nesta categoria</div>
+      <div class="grid g2 mt6" style="gap:2px 18px;">
+        <ul class="clean"><li>Novos módulos</li><li>Novas integrações</li><li>Alterações relevantes de fluxo</li><li>Novos dashboards</li></ul>
+        <ul class="clean"><li>Relatórios adicionais</li><li>Automações específicas</li><li>Conectores com outros sistemas</li><li>Demandas não previstas no MVP</li></ul>
+      </div>
+    </div>
+  </div>
+
+  <div class="quote mt24">
+    <div class="qt">Você investe em evolução quando faz sentido para o negócio — cada nova entrega é escopo definido, valor claro e prioridade acordada.</div>
+    <div class="qs">Escada de valor: MVP → Suporte → Evoluções → IA</div>
+  </div>
+
+  <div class="rf"><span class="lock"><svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>Documento comercial confidencial · Uso restrito Belcar Caminhões</span><span class="pageno">11 / 16</span></div>
+</section>
+
+<!-- ============================ PAGE 12 — IA / AGENTES / INTEGRAÇÕES ============================ -->
+<section class="page">
+  <div class="rh"><div class="brand">STILO<span>WEB</span> · Negócios Digitais</div><div>Torre de Controle Belcar</div></div>
+
+  <div class="kicker">11 · IA, agentes e integrações</div>
+  <h1 class="h1 mt10">A camada avançada,<br>dimensionada sob consulta.</h1>
+  <p class="lead mt14" style="max-width:520px;">
+    Inteligência artificial e agentes inteligentes são a fronteira de valor da plataforma. Por dependerem de dados,
+    segurança e regras específicas, são orçados caso a caso — com responsabilidade.
+  </p>
+
+  <div class="grid g2 mt24" style="gap:14px;">
+    <div class="card accent-top" style="text-align:center; padding:22px;">
+      <div class="ico purple" style="margin:0 auto;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M19 5l-2 2M7 17l-2 2"/></svg></div>
+      <div class="h3 mt10">Integração de IA</div>
+      <div style="font-size:24px; font-weight:850; color:var(--purple); margin-top:6px;">Sob consulta</div>
+      <p class="mt6" style="font-size:9.5px;">Classificação, alertas, resumos e priorização inteligente sobre os dados da operação.</p>
+    </div>
+    <div class="card accent-top" style="text-align:center; padding:22px;">
+      <div class="ico orange" style="margin:0 auto;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="8" width="14" height="11" rx="2"/><path d="M12 8V5M8 3h8M9 13h.01M15 13h.01M9 16h6"/></svg></div>
+      <div class="h3 mt10">Agentes inteligentes</div>
+      <div style="font-size:24px; font-weight:850; color:var(--orange); margin-top:6px;">Sob consulta</div>
+      <p class="mt6" style="font-size:9.5px;">Assistentes que acompanham o fluxo, sugerem ações e reduzem trabalho repetitivo.</p>
+    </div>
+  </div>
+
+  <div class="card mt20">
+    <div class="h3">O orçamento depende de</div>
+    <div class="grid g3 mt10" style="gap:8px 18px;">
+      <ul class="clean"><li>Volume de dados</li><li>Qualidade das informações</li><li>Sistemas externos envolvidos</li></ul>
+      <ul class="clean"><li>Regras de negócio</li><li>Requisitos de segurança</li><li>Nível de automação desejado</li></ul>
+      <ul class="clean"><li>Necessidade de aprovação humana</li><li>Custo de infraestrutura e APIs</li><li>Complexidade de integração</li></ul>
+    </div>
+  </div>
+
+  <div class="note mt18">Nenhuma integração de IA é prometida de forma automática. Cada frente é avaliada tecnicamente antes de qualquer compromisso de escopo ou prazo.</div>
+
+  <div class="rf"><span class="lock"><svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>Documento comercial confidencial · Uso restrito Belcar Caminhões</span><span class="pageno">12 / 16</span></div>
+</section>
+
+<!-- ============================ PAGE 13 — INVESTIMENTO RESUMIDO ============================ -->
+<section class="page">
+  <div class="rh"><div class="brand">STILO<span>WEB</span> · Negócios Digitais</div><div>Torre de Controle Belcar</div></div>
+
+  <div class="kicker">12 · Investimento resumido</div>
+  <h1 class="h1 mt10">Uma proposta clara,<br>do MVP à inteligência.</h1>
+  <p class="lead mt14" style="max-width:520px;">
+    Cada camada de investimento é independente e opcional a partir do MVP. A Belcar avança na escada de valor no
+    tempo certo, com previsibilidade de custo em cada passo.
+  </p>
+
+  <table class="exec mt24">
+    <thead><tr><th style="width:26%;">Item</th><th>Descrição</th><th style="text-align:right;">Valor</th></tr></thead>
+    <tbody>
+      <tr><td><span class="it">Desenvolvimento MVP</span></td><td>Mínimo de 120 horas · análise, design, build e entrega</td><td class="val">R$ 24.000<span class="u">,00</span></td></tr>
+      <tr><td><span class="it">Assistência e suporte</span></td><td>Recorrência mensal (MRR) de estabilidade e apoio</td><td class="val">R$ 850<span class="u">,00/mês</span></td></tr>
+      <tr><td><span class="it">Novos desenvolvimentos</span></td><td>Hora de desenvolvedor · escopo aprovado antes</td><td class="val">R$ 250<span class="u">,00/h</span></td></tr>
+      <tr><td><span class="it">Integração de IA</span></td><td>Escopo específico · avaliação técnica prévia</td><td class="val">Sob consulta</td></tr>
+      <tr><td><span class="it">Agentes inteligentes</span></td><td>Escopo específico · avaliação técnica prévia</td><td class="val">Sob consulta</td></tr>
+    </tbody>
+  </table>
+
+  <div class="grid g3 mt20">
+    <div class="card" style="text-align:center; padding:16px;"><div class="tag-soft">Entrada</div><div style="font-size:16px; font-weight:850; color:var(--navy); margin-top:4px;">MVP único</div><p style="font-size:9px; margin-top:3px;">Investimento inicial de implantação</p></div>
+    <div class="card" style="text-align:center; padding:16px;"><div class="tag-soft">Recorrente</div><div style="font-size:16px; font-weight:850; color:var(--navy); margin-top:4px;">Suporte mensal</div><p style="font-size:9px; margin-top:3px;">Continuidade e estabilidade</p></div>
+    <div class="card" style="text-align:center; padding:16px;"><div class="tag-soft">Sob demanda</div><div style="font-size:16px; font-weight:850; color:var(--navy); margin-top:4px;">Evoluções e IA</div><p style="font-size:9px; margin-top:3px;">No ritmo do negócio</p></div>
+  </div>
+
+  <div class="card mt18" style="border-left:3px solid var(--amber); background:rgba(217,119,6,.05);">
+    <p style="font-size:10px;"><span class="em">Nota:</span> valores sujeitos à definição final de escopo, prazos, integrações e validações técnicas. Impostos e condições de pagamento serão detalhados na formalização da proposta.</p>
+  </div>
+
+  <div class="rf"><span class="lock"><svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>Documento comercial confidencial · Uso restrito Belcar Caminhões</span><span class="pageno">13 / 16</span></div>
+</section>
+
+<!-- ============================ PAGE 14 — ROADMAP ============================ -->
+<section class="page">
+  <div class="rh"><div class="brand">STILO<span>WEB</span> · Negócios Digitais</div><div>Torre de Controle Belcar</div></div>
+
+  <div class="kicker">13 · Roadmap recomendado</div>
+  <h1 class="h1 mt10">Uma evolução em fases,<br>do controle à inteligência.</h1>
+  <p class="lead mt14" style="max-width:520px;">
+    A jornada recomendada distribui valor e investimento ao longo do tempo — cada fase consolida a anterior e prepara
+    o terreno para a seguinte.
+  </p>
+
+  <div class="mt24" style="position:relative; padding-left:8px;">
+    <div style="position:absolute; left:26px; top:14px; bottom:14px; width:2px; background:linear-gradient(180deg,var(--blue),var(--purple),var(--orange));"></div>
+
+    <div style="display:flex; gap:16px; align-items:flex-start; margin-bottom:14px;">
+      <div style="width:38px; height:38px; border-radius:12px; background:var(--blue); color:#fff; display:flex; align-items:center; justify-content:center; font-weight:850; font-size:14px; flex:none; z-index:2; box-shadow:var(--shadow-sm);">1</div>
+      <div class="card" style="flex:1; padding:14px 16px;"><div style="display:flex; justify-content:space-between; align-items:center;"><div class="h3">MVP funcional</div><span class="pill blue">Fase 1</span></div><p class="mt6" style="font-size:10px;">Organização do fluxo principal, entrega do núcleo operacional e validação com a equipe. É a fundação de tudo.</p></div>
+    </div>
+
+    <div style="display:flex; gap:16px; align-items:flex-start; margin-bottom:14px;">
+      <div style="width:38px; height:38px; border-radius:12px; background:var(--blue-soft); color:#fff; display:flex; align-items:center; justify-content:center; font-weight:850; font-size:14px; flex:none; z-index:2; box-shadow:var(--shadow-sm);">2</div>
+      <div class="card" style="flex:1; padding:14px 16px;"><div style="display:flex; justify-content:space-between; align-items:center;"><div class="h3">Consolidação operacional</div><span class="pill blue">Fase 2</span></div><p class="mt6" style="font-size:10px;">Ajustes, indicadores, filtros, relatórios e melhoria de usabilidade. O sistema ganha profundidade de gestão.</p></div>
+    </div>
+
+    <div style="display:flex; gap:16px; align-items:flex-start; margin-bottom:14px;">
+      <div style="width:38px; height:38px; border-radius:12px; background:var(--purple); color:#fff; display:flex; align-items:center; justify-content:center; font-weight:850; font-size:14px; flex:none; z-index:2; box-shadow:var(--shadow-sm);">3</div>
+      <div class="card" style="flex:1; padding:14px 16px;"><div style="display:flex; justify-content:space-between; align-items:center;"><div class="h3">Automação</div><span class="pill orange">Fase 3</span></div><p class="mt6" style="font-size:10px;">Alertas, regras, notificações e integração com ferramentas internas. A operação começa a trabalhar sozinha nos pontos certos.</p></div>
+    </div>
+
+    <div style="display:flex; gap:16px; align-items:flex-start;">
+      <div style="width:38px; height:38px; border-radius:12px; background:var(--orange); color:#fff; display:flex; align-items:center; justify-content:center; font-weight:850; font-size:14px; flex:none; z-index:2; box-shadow:var(--shadow-sm);">4</div>
+      <div class="card" style="flex:1; padding:14px 16px;"><div style="display:flex; justify-content:space-between; align-items:center;"><div class="h3">Inteligência artificial</div><span class="pill orange">Fase 4</span></div><p class="mt6" style="font-size:10px;">Agentes, análise preditiva, resumos automáticos e priorização inteligente. A base digital se torna vantagem competitiva.</p></div>
+    </div>
+  </div>
+
+  <div class="rf"><span class="lock"><svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>Documento comercial confidencial · Uso restrito Belcar Caminhões</span><span class="pageno">14 / 16</span></div>
+</section>
+
+<!-- ============================ PAGE 15 — FECHAMENTO ============================ -->
+<section class="page" style="padding:0; background:linear-gradient(155deg,#0A1730 0%,#10224a 48%,#241f52 82%,#3a2668 100%);">
+  <div style="position:absolute; inset:0; overflow:hidden;">
+    <div style="position:absolute; width:520px; height:520px; left:-160px; top:-160px; border-radius:50%; background:radial-gradient(circle, rgba(90,75,196,.30), transparent 65%);"></div>
+    <div style="position:absolute; width:480px; height:480px; right:-170px; bottom:-170px; border-radius:50%; background:radial-gradient(circle, rgba(242,97,17,.26), transparent 65%);"></div>
+    <div style="position:absolute; inset:0; background-image:linear-gradient(rgba(255,255,255,.04) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.04) 1px,transparent 1px); background-size:34px 34px; opacity:.5;"></div>
+  </div>
+
+  <div style="position:relative; height:100%; display:flex; flex-direction:column; padding:22mm 18mm 16mm;">
+    <div class="kicker on-dark" style="color:#F2A06A;">14 · Fechamento comercial</div>
+
+    <h1 style="color:#fff; font-size:30px; font-weight:850; line-height:1.15; letter-spacing:-.01em; margin-top:16px; max-width:520px;">
+      A Belcar não precisa de mais uma ferramenta.<br>
+      <span style="color:#F2843C;">Precisa de uma central operacional.</span>
+    </h1>
+    <p style="color:#C6D3EA; font-size:13px; max-width:500px; margin-top:16px; line-height:1.65;">
+      Uma central capaz de transformar estoque, fluxo e prioridade em controle real — e de servir como base para
+      a próxima geração de decisões apoiadas por inteligência artificial.
+    </p>
+
+    <div style="margin-top:26px; background:rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.14); border-radius:16px; padding:20px 22px; max-width:560px;">
+      <div style="color:#F2A06A; font-size:9.5px; font-weight:800; letter-spacing:.14em; text-transform:uppercase;">Próximo passo recomendado</div>
+      <p style="color:#EAF0FA; font-size:12.5px; margin-top:8px; line-height:1.6; font-weight:600;">
+        Validar o escopo final, confirmar os módulos prioritários e iniciar o ciclo de implantação assistida do MVP.
+      </p>
+    </div>
+
+    <div style="margin-top:auto; display:flex; justify-content:space-between; align-items:flex-end; gap:24px; padding-top:30px; border-top:1px solid rgba(255,255,255,.14);">
+      <div>
+        <div style="color:#7E90B4; font-size:8.5px; letter-spacing:.14em; text-transform:uppercase; font-weight:700;">Assinatura</div>
+        <div style="color:#fff; font-size:15px; font-weight:800; margin-top:8px;">StiloWeb Negócios Digitais</div>
+        <div style="color:#C6D3EA; font-size:11px; margin-top:4px;">Matheus Sizervincio &nbsp;·&nbsp; Carlos Henrique</div>
+        <div style="color:#7E90B4; font-size:9px; margin-top:2px;">Diretores</div>
+      </div>
+      <div style="background:#fff; border-radius:12px; padding:12px 16px; box-shadow:0 12px 30px rgba(0,0,0,.28);">
+        <img src="logo.png" alt="StiloWeb" style="height:42px; display:block;">
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================ PAGE 16 — CHECKLIST DE SEGURANÇA (INTERNO) ============================ -->
+<section class="page">
+  <div class="rh"><div class="brand">STILO<span>WEB</span> · Negócios Digitais</div><div>Anexo interno de conformidade</div></div>
+
+  <div class="kicker">Anexo · Uso interno StiloWeb</div>
+  <h1 class="h2 mt10">Checklist de segurança comercial</h1>
+  <p class="lead mt10" style="max-width:530px; font-size:11.5px;">
+    Verificação de conformidade aplicada a este material antes da entrega — garante que o documento vende valor de
+    negócio sem expor propriedade intelectual ou segredos técnicos.
+  </p>
+
+  <div class="grid g2 mt20" style="gap:10px 16px;">
+    <div class="card" style="padding:12px 14px;"><ul class="clean check" style="margin:0;"><li>Não expõe código-fonte</li></ul></div>
+    <div class="card" style="padding:12px 14px;"><ul class="clean check" style="margin:0;"><li>Não mostra telas copiáveis do sistema</li></ul></div>
+    <div class="card" style="padding:12px 14px;"><ul class="clean check" style="margin:0;"><li>Não revela arquitetura interna</li></ul></div>
+    <div class="card" style="padding:12px 14px;"><ul class="clean check" style="margin:0;"><li>Não expõe estrutura de banco ou nomes de tabelas</li></ul></div>
+    <div class="card" style="padding:12px 14px;"><ul class="clean check" style="margin:0;"><li>Não expõe rotas de API, endpoints ou serviços</li></ul></div>
+    <div class="card" style="padding:12px 14px;"><ul class="clean check" style="margin:0;"><li>Não expõe dados reais, clientes ou credenciais</li></ul></div>
+    <div class="card" style="padding:12px 14px;"><ul class="clean check" style="margin:0;"><li>Não entrega lógica proprietária ou prompts de IA</li></ul></div>
+    <div class="card" style="padding:12px 14px;"><ul class="clean check" style="margin:0;"><li>Usa apenas representações conceituais e abstratas</li></ul></div>
+    <div class="card" style="padding:12px 14px;"><ul class="clean check" style="margin:0;"><li>Vende valor de negócio, não funcionamento interno</li></ul></div>
+    <div class="card" style="padding:12px 14px;"><ul class="clean check" style="margin:0;"><li>Mantém linguagem executiva e responsável</li></ul></div>
+    <div class="card" style="padding:12px 14px;"><ul class="clean check" style="margin:0;"><li>Não faz promessas financeiras não comprovadas</li></ul></div>
+    <div class="card" style="padding:12px 14px;"><ul class="clean check" style="margin:0;"><li>Preserva a propriedade intelectual da StiloWeb</li></ul></div>
+  </div>
+
+  <div class="card mt20" style="background:linear-gradient(100deg,#0C1B3A,#123a2a); border:none; color:#EAF0FA;">
+    <div style="display:flex; gap:12px; align-items:center;">
+      <div class="ico green" style="background:rgba(255,255,255,.10); color:#7CE0A3;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3l8 4v5c0 5-3.5 8-8 9-4.5-1-8-4-8-9V7z"/><path d="M9 12l2 2 4-4"/></svg></div>
+      <div><div style="font-weight:800; font-size:12px; color:#fff;">Aprovado para apresentação</div>
+      <p style="color:#BFE4CC; font-size:10px; margin-top:3px;">Material em conformidade com as regras de confidencialidade. Recomenda-se distribuição controlada e identificada por destinatário.</p></div>
+    </div>
+  </div>
+
+  <div class="mt18" style="display:flex; gap:10px;">
+    <span class="premissa">◆ Premissas comerciais adotadas onde o repositório apresentava lacunas — sinalizadas ao longo do documento</span>
+  </div>
+
+  <div class="rf"><span class="lock"><svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>Anexo interno · Não incluir na versão enviada ao cliente</span><span class="pageno">16 / 16</span></div>
+</section>
+
+</body>
+</html>
